@@ -84,3 +84,14 @@ export const avoidInProduction = asyncHandler(async (req, res, next) => {
     );
   }
 });
+
+
+export const isAdmin = asyncHandler(async (req, res, next) => {
+  const { role } = req.user;
+
+  if (role !== "admin") {
+    throw new ApiError(403, "Access denied. Admins only.");
+  }
+
+  next();
+});
