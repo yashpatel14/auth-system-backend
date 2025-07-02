@@ -141,10 +141,10 @@ const verifyEmail = asyncHandler(async (req, res) => {
     emailVerificationExpiry: { $gt: Date.now() },
   });
 
-  console.log(user);
+  // console.log(user);
 
-  console.log("Incoming raw token:", token);
-  console.log("Hashed token:", hashedToken);
+  // console.log("Incoming raw token:", token);
+  // console.log("Hashed token:", hashedToken);
 
   if (!user) {
     throw new ApiError(489, "Token is invalid or expired");
@@ -424,7 +424,7 @@ const forgotPassword = asyncHandler(async (req, res) => {
     );
 });
 
-export const resetPassword = asyncHandler(async (req, res) => {
+const resetPassword = asyncHandler(async (req, res) => {
   const { token } = req.params;
   const { password } = handleZodError(validateResetPassword(req.body));
 
@@ -560,7 +560,9 @@ const getActiveSessions = asyncHandler(async (req, res) => {
   const { id: userId } = req.user;
   const currentRefreshToken = req.cookies.refreshToken;
 
-  const hashedRefreshToken = createHash(currentRefreshToken);
+  const user = await User.findById(userId).select("-password -emailVerificationToken -emailVerificationExpiry");
+
+  const hashedRefreshToken = user.createHash(currentRefreshToken);
 
   const sessions = await Session.find({ userId })
     .select({
@@ -747,4 +749,6 @@ export {
   refreshAccessToken,
   logoutAllSessions,
   getActiveSessions,
+  forgotPassword,
+  resetPassword
 };
