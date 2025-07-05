@@ -84,7 +84,7 @@ const register = asyncHandler(async (req, res, next) => {
     subject: "Please verify your email",
     mailgenContent: emailVerificationMailgenContent(
       user.username,
-      `${req.protocol}://${req.get("host")}/api/v1/auth/verify/${unHashedToken}`
+      `${process.env.CLIENT_URL}/verify-email/${unHashedToken}`
     ),
   });
 
@@ -141,10 +141,10 @@ const verifyEmail = asyncHandler(async (req, res) => {
     emailVerificationExpiry: { $gt: Date.now() },
   });
 
-  // console.log(user);
+  console.log("User found:", user);
 
-  // console.log("Incoming raw token:", token);
-  // console.log("Hashed token:", hashedToken);
+  console.log("Incoming raw token:", token);
+  console.log("Hashed token:", hashedToken);
 
   if (!user) {
     throw new ApiError(489, "Token is invalid or expired");
@@ -224,9 +224,7 @@ const resendEmailVerification = asyncHandler(async (req, res) => {
     subject: "Please verify your email",
     mailgenContent: emailVerificationMailgenContent(
       user.username,
-      `${req.protocol}://${req.get(
-        "host"
-      )}/api/v1/users/verify-email/${unHashedToken}`
+      `${process.env.CLIENT_URL}/verify-email/${unHashedToken}`
     ),
   });
 
@@ -401,9 +399,7 @@ const forgotPassword = asyncHandler(async (req, res) => {
     subject: "Please verify your email",
     mailgenContent: emailVerificationMailgenContent(
       user.username,
-      `${req.protocol}://${req.get(
-        "host"
-      )}/api/v1/users/verify-email/${unHashedToken}`
+      `${process.env.CLIENT_URL}/verify-email/${unHashedToken}`
     ),
   });
 
@@ -542,7 +538,9 @@ const logoutAllSessions = asyncHandler(async (req, res) => {
   const { id } = req.user;
   const { refreshToken } = req.cookies;
 
-  const hashedRefreshToken = createHash(refreshToken);
+  const user = await User.findById(req.user._id)
+
+  const hashedRefreshToken = user.createHash(refreshToken);
 
   await Session.deleteMany({
     userId: id,
@@ -720,7 +718,7 @@ const googleLogin = asyncHandler(async (req, res) => {
 const getProfile = asyncHandler(async (req, res) => {
   const { id } = req.user._id;
 
-  const user = await User.findById(id);
+  const user = await User.findById(req.user._id);
 
   if (!user) {
     throw new ApiError(404, "User not found");
